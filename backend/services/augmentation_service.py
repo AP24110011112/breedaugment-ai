@@ -8,7 +8,7 @@ from threading import Lock
 import numpy as np
 from PIL import Image
 import albumentations as A
-from backend.config import AUGMENTED,DATASET,ORIGINAL,PROCESSED,SAMPLES,SPLITS
+from backend.config import AUGMENTED,DATASET,ORIGINAL,OUTPUTS,PROCESSED,SAMPLES,SPLITS
 from backend.utils.helpers import load_rgb,read_json,write_json,safe_breed_name,validate_image_bytes
 
 _SAVE_LOCK=Lock()
@@ -74,7 +74,7 @@ def training_variants(count=2,strategy='combined'):
 
 def list_samples():
     results=[]
-    for folder,base_url in ((SAMPLES,'/files/outputs/samples'),(Path(__file__).resolve().parents[2]/'outputs'/'augmentation_samples','/files/outputs/augmentation_samples')):
+    for folder,base_url in ((SAMPLES,'/files/outputs/samples'),(OUTPUTS/'augmentation_samples','/files/outputs/augmentation_samples')):
         if folder.exists():
             for path in sorted(folder.glob('*.jpg'),key=lambda x:x.stat().st_mtime,reverse=True)[:100]:
                 results.append({'filename':path.name,'url':f'{base_url}/{path.name}'})

@@ -107,6 +107,59 @@ The Augmentation page creates previews under `outputs/samples/`; previews from a
 - `POST /api/prediction/predict` (multipart: `image`, optional `model_type`)
 - `GET /api/models/status`
 
+## Production deployment (Vercel + Render)
+
+The repository is a two-service app: deploy `frontend/` as a Vercel static site and deploy the FastAPI app from the repository root as a Render web service. The GitHub repository can remain private; connect it through your Render and Vercel GitHub integrations.
+
+### Render backend
+
+Create a **Python web service** from `AP24110011112/breedaugment-ai`, branch `main`, with the repository root as its service root (leave Root Directory blank):
+
+| Setting | Value |
+| --- | --- |
+| Build command | `pip install -r backend/requirements.txt` |
+| Start command | `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` |
+| Health check path | `/api/health` |
+
+Use Python 3.11; `.python-version` pins the Render build to that minor version. Attach a persistent disk mounted at `/var/data`, then set these service environment variables:
+
+```text
+BREEDAUGMENT_DATA_DIR=/var/data
+FRONTEND_ORIGINS=https://YOUR-VERCEL-SITE.vercel.app
+MAX_UPLOAD_BYTES=15728640
+```
+
+Replace the Vercel origin with the actual production URL, without a trailing slash. Add a comma-separated list if you also need to allow additional frontend origins. Render's `PORT` is provided by the platform; do not set it manually. Without a persistent disk, uploads, generated images, model files, and reports disappear on service restarts or deploys.
+
+### Vercel frontend
+
+Import the same GitHub repository into Vercel. Set **Root Directory** to `frontend` and use:
+
+| Setting | Value |
+| --- | --- |
+| Framework preset | Vite |
+| Install command | `npm ci` |
+| Build command | `npm run build` |
+| Output directory | `dist` |
+
+Add this Vercel Production environment variable, replacing the hostname with the Render service URL:
+
+```text
+VITE_API_URL=https://YOUR-RENDER-SERVICE.onrender.com
+```
+
+Vite embeds `VITE_API_URL` into the frontend during its build, so redeploy Vercel after changing it. The Axios service uses this origin for API requests and generated image links. Then update Render's `FRONTEND_ORIGINS` with the Vercel production URL and redeploy Render. Verify the API at `https://YOUR-RENDER-SERVICE.onrender.com/api/health` and open the Vercel URL.
+
+### Dataset, models, and access
+
+There is no database in this project. Dataset images, trained `.keras` models, and JSON experiment state are stored as files. They are deliberately excluded from Git, so a new hosted deployment starts without the local 7,390 Oxford Pet images or local trained weights. To use prediction immediately, copy the model files and their matching `*_config.json` files to `/var/data/models`; otherwise populate the hosted dataset and train the models there. Do not add these assets or credentials to Git. Keep the original dataset attribution in mind when redistributing images.
+
+The current app has no user authentication: its dataset upload/delete and model training endpoints are callable by anyone who can reach the public API. CORS only controls browser-origin access and is not API authentication. Before leaving the service open to the public, add authentication/authorization for write and training operations or restrict the service to a trusted audience. Dataset upload requests are capped at 100 MB total, and each validated image is capped by `MAX_UPLOAD_BYTES` (15 MB by default).
+
+### Automatic deploys
+
+The Git integrations can watch `main` and automatically rebuild Vercel and redeploy Render after each push. Enable automatic deploys on both service dashboards, and keep the backend and frontend environment variables set in their respective dashboards. Render supports Git-connected private repositories; Vercel likewise needs permission to access this private repository.
+
 ## TensorFlow models
 
 Both model variants use MobileNetV2, 224×224 RGB images, ImageNet initialization, global-average pooling, dropout, a dynamically sized softmax output, Adam, and sparse categorical cross-entropy. Training uses ModelCheckpoint, EarlyStopping, and ReduceLROnPlateau. A single training task is allowed at a time; progress is written to `outputs/reports/training_status.json` and exposed through polling.

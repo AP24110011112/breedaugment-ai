@@ -1,4 +1,5 @@
 """FastAPI application. Supports both `uvicorn main:app` from backend/ and backend.main:app from the repo root."""
+import os
 import sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
@@ -14,7 +15,9 @@ from backend.services.activity_service import recent_activities
 from backend.utils.helpers import read_json
 
 app=FastAPI(title='BreedAugment AI API',version='1.0.0',description='Local-first dataset, augmentation, TensorFlow training, evaluation, and breed prediction API.')
-app.add_middleware(CORSMiddleware,allow_origins=['http://localhost:5173','http://127.0.0.1:5173'],allow_credentials=True,allow_methods=['*'],allow_headers=['*'])
+_default_origins='http://localhost:5173,http://127.0.0.1:5173'
+_frontend_origins=[origin.strip().rstrip('/') for origin in os.getenv('FRONTEND_ORIGINS',_default_origins).split(',') if origin.strip()]
+app.add_middleware(CORSMiddleware,allow_origins=_frontend_origins,allow_credentials=True,allow_methods=['*'],allow_headers=['*'])
 app.include_router(dataset_routes.router); app.include_router(augmentation_routes.router); app.include_router(training_routes.router); app.include_router(evaluation_routes.router); app.include_router(prediction_routes.router)
 for url,directory in (('/files/dataset/original',ORIGINAL),('/files/dataset/augmented',AUGMENTED),('/files/outputs/samples',SAMPLES),('/files/outputs/augmentation_samples',OUTPUTS/'augmentation_samples'),('/files/outputs/graphs',GRAPHS),('/files/outputs/reports',REPORTS),('/files/outputs/confusion_matrix',CONFUSION)):
     directory.mkdir(parents=True,exist_ok=True); app.mount(url,StaticFiles(directory=directory),name='files_'+url.replace('/','_'))
