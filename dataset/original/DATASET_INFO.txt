@@ -1,0 +1,15 @@
+DATASET: Oxford-IIIT Pet Dataset
+
+Images were downloaded from the Zenodo record:
+https://doi.org/10.5281/zenodo.8067751
+Record title: The Oxford-IIIT Pet Dataset
+The archive is a mirror of the dataset described on the University of Oxford Visual Geometry Group page:
+https://www.robots.ox.ac.uk/~vgg/data/pets/
+
+The Oxford page states that the dataset is available under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0). The copyright of the photographs remains with their original owners. Please retain this attribution and review the linked license before redistributing this dataset or derivative materials.
+License: https://creativecommons.org/licenses/by-sa/4.0/
+
+Dataset paper:
+O. M. Parkhi, A. Vedaldi, A. Zisserman, and C. V. Jawahar, “Cats and Dogs,” IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012.
+
+This project downloaded the archive named “The Oxford-IIIT Pet.zip” (MD5: 7f61d2a52733bce84d505617dd7e780a) from the Zenodo record. Train and validation folders from that archive were combined by breed in this directory; the project then creates its own stratified train/validation/test split before augmentation.

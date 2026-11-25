@@ -1,0 +1,3 @@
+import {Activity,ChevronRight} from 'lucide-react'
+const titles={dashboard:'Overview',dataset:'Dataset management',augmentation:'Image augmentation',training:'Model training',evaluation:'Model evaluation',prediction:'Breed prediction',about:'About the project'}
+export default function Navbar({page,health}){return <header className="topbar"><div className="crumb"><span>Workspace</span><ChevronRight size={14}/><strong>{titles[page]||'Overview'}</strong></div><div className="top-actions"><div className={`api-status ${health?'online':'offline'}`}><Activity size={14}/><span>{health?'API connected':'API unavailable'}</span></div><div className="avatar">BA</div></div></header>}
